@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <div class="alert alert-success" role="alert">
+        <h4 class="alert-heading">Welcome {{request.user.username}}</h4>
+        <p>Aww yeah, you successfully added your Notes.</p>
+        <hr>
+        <p class="mb-0">Whenever you need to, add more notes to you Your notes feel free to add the notes,
+            keep things nice and tidy.</p>
+    </div>
+</div>
+
+<div class="container">
+
+    <div class="row">
+        <div class="col-lg-5">
+            <div class="col-8 mx-auto border rounded p-3">
+                <h3 class="pb-2">Add Your Notes Here</h3>
+                <p id="message"></p>
+                <form action="" id="noteForm">
+                    {% csrf_token %}
+                    {{form.as_p}}
+                    <input type="submit" class="btn btn-success btn-sm p-2" value="Add Note" id="add"/>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-7 mt-3">
+            <table class="table " id="notesTable">
+                <thead>
+                    <tr>
+                        <th scope="col">S.NO</th>
+                        <th scope="col">Title</th>
+                        <th scope="col">Description</th>
+                        <th scope="col">Edit</th>
+                        <th scope="col">Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {%for note in notes%}
+                    <tr>
+                        <th scope="row">{{forloop.counter}}</th>
+                        <td class="title">{{note.title}}</td>
+                        <td class="description">{{note.description}}</td>
+                        <td><button data="{{note.id}}" class="btn btn-primary edit">Edit</button></td>
+                        <td><button data="{{note.id}}" class="btn btn-danger">Delete</button></td>
+                    </tr>
+                    {% endfor %}
+                
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script src="//cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script>
+    let table = new DataTable('#notesTable');
+    let activeItem = null 
+    function editItem(item){
+    var title = item.find('.title').text();
+    var description = item.find('.description').text();
+    var edit_id = item.find('.edit').attr('data');
+    $('#id_title').val(title);
+    $('#id_description').val(description);
+    $('#add').val('Update Note');
+    $('#add').removeClass('bg-success');
+    $('#add').addClass('bg-danger');
+    activeItem = edit_id   
+}
+    
+    
+    $(document).on('submit','#noteForm',function(e){
+        e.preventDefault();
+        title = $('#id_title').val();
+        description = $('#id_description').val();
+        url = "{% url 'index' %}";
+        data = { 
+            "title" : title,
+            "description" : description,
+            csrfmiddlewaretoken : $('input[name=csrfmiddlewaretoken]').val()
+
+        }
+        if(activeItem != null){
+            url ="{% url 'EditNote' %}"
+            data['edit_id'] = activeItem
+        }
+        $.ajax({
+            type:'POST',
+            url :url,
+            data :data,
+            success:function(response){
+                console.log(response)
+                console.log(response.notes)
+                data = response.notes
+                $('#notesTable tbody').empty()
+                $('#noteForm').trigger('reset')
+                if(response.status==1){
+                    for(i = 0 ;i<data.length;i++){
+                        $('#notesTable tbody').append(    
+                            `                
+                            <tr>
+                            <th scope="row">${i+1}</th>
+                            <td class="title">${data[i].title}</td>
+                            <td class="description ">${data[i].description}</td>
+                            <td><button data="${data[i].id}"  class="btn btn-primary edit">Edit</button></td>
+                            <td><button data="${data[i].id}" class="btn btn-danger">Delete</button></td>
+                            </tr>
+                        `
+                        )
+                    }
+
+                }
+                 
+                $('#message').text(response.status_message)
+                $('#message').addClass('bg-success')
+                $('#message').addClass("p-4")
+                $('.edit').click(function(){
+                    var item = $(this).closest('tr')
+                    editItem(item)
+                })
+
+                if(response.status_message = "Note created")
+                $('#message').text(response.status_message) 
+                $('#message').removeClass('bg-success')
+                $('#message').addClass('bg-warning')
+                $('#add').val('Add Note')
+                $('#add').removeClass('bg-danger')
+                $('#add').addClass('bg-success')
+                activeItem = null
+
+
+            }
+        })
+    })
+
+    $('.edit').click(function(){
+        var item = $(this).closest('tr')
+        editItem(item)
+    })
+    
+</script>
+{% endblock %}

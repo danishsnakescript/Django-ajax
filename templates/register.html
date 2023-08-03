@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li id = "error_text" {% if message.tags %} class="bg-{{ message.tags }}"{% endif %}> {{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+    <div class="container">
+        <p id = 'error' class="white-text"></p>
+        <h1>Register Form</h1>
+        <div class="mb-3">
+            <form method="POST"  action="{% url 'register' %}" id="registerForm">
+                {% csrf_token %}
+                {{form.as_p}}
+                <input type="submit" value="Register" class="btn btn-sm btn-success"/>
+            </form>
+        </div>
+    </div>
+
+    <script>
+
+        $(document).on('submit','#registerForm',function(e){
+
+            e.preventDefault()
+            $.ajax({
+                'type' : 'POST',
+                'url' : '/register/',
+                'data' : {
+                    name:$('#id_name').val(),
+                    username:$('#id_username').val(),
+                    email:$('#id_email').val(),
+                    password:$('#id_password').val(),
+                    re_password : $('#id_re_password').val(),
+                    csrfmiddlewaretoken : $('input[name=csrfmiddlewaretoken]').val()
+                },
+                success:function(response){
+                    console.log(response)
+                    var error = $(response).find('#error_text')
+                    console.log(error) 
+                    var error_class = $(error).attr('class')
+                    console.log(error_class)
+                    console.log(error.text())
+                    $('#error').addClass(error_class)
+                    $('#error').addClass('p-2')
+                    $('#error').text(error.text())
+                    if(error.text().trim() == "user created"){
+                        window.location = "{% url 'Login' %}"
+                    }
+
+                }
+            })
+        })
+    </script>
+
+{% endblock %}
