@@ -78,3 +78,11 @@ def edit_note(request):
     notes = Note.objects.values().filter(user = request.user)
     user_notes=list(notes)
     return JsonResponse({"status":"1",'status_message' : "Note created","notes" : user_notes})
+
+
+def delete_note(request):
+    delete_id = request.GET.get('delete_id')
+    Note.objects.filter (id=delete_id).first().delete()
+    notes = Note.objects.values().filter(user=request.user)
+    user_notes=list(notes)
+    return JsonResponse({"status":"1",'status_message' : "Note Deleted","notes" : user_notes})

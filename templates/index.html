@@ -1,3 +1,4 @@
+
 {% extends 'base.html' %}
 
 {% block content %}
@@ -7,7 +8,8 @@
         <h4 class="alert-heading">Welcome {{request.user.username}}</h4>
         <p>Aww yeah, you successfully added your Notes.</p>
         <hr>
-        <p class="mb-0">Whenever you need to, add more notes to you Your notes feel free to add the notes,
+        <p class="mb-0">Whenever you need to, add more notes to you Your notes
+            feel free to add the notes,
             keep things nice and tidy.</p>
     </div>
 </div>
@@ -22,7 +24,8 @@
                 <form action="" id="noteForm">
                     {% csrf_token %}
                     {{form.as_p}}
-                    <input type="submit" class="btn btn-success btn-sm p-2" value="Add Note" id="add"/>
+                    <input type="submit" class="btn btn-success btn-sm p-2"
+                        value="Add Note" id="add"/>
                 </form>
             </div>
         </div>
@@ -44,11 +47,13 @@
                         <th scope="row">{{forloop.counter}}</th>
                         <td class="title">{{note.title}}</td>
                         <td class="description">{{note.description}}</td>
-                        <td><button data="{{note.id}}" class="btn btn-primary edit">Edit</button></td>
-                        <td><button data="{{note.id}}" class="btn btn-danger">Delete</button></td>
+                        <td><button data="{{note.id}}" class="btn btn-primary
+                                edit">Edit</button></td>
+                        <td><button data="{{note.id}}" class="btn btn-danger
+                                delete">Delete</button></td>
                     </tr>
                     {% endfor %}
-                
+
                 </tbody>
             </table>
         </div>
@@ -57,7 +62,28 @@
 <script src="//cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script>
     let table = new DataTable('#notesTable');
+   
     let activeItem = null 
+
+    //show function
+    function showNote(data){
+        $('#notesTable tbody').empty()
+            for(i = 0 ;i<data.length;i++){
+                $('#notesTable tbody').append(    
+                    `                
+                    <tr>
+                    <th scope="row">${i+1}</th>
+                    <td class="title">${data[i].title}</td>
+                    <td class="description ">${data[i].description}</td>
+                    <td><button data="${data[i].id}"  class="btn btn-primary edit">Edit</button></td>
+                    <td><button data="${data[i].id}" class="btn btn-danger delete  ">Delete</button></td>
+                    </tr>
+                `
+                )
+            }
+
+            }
+
     function editItem(item){
     var title = item.find('.title').text();
     var description = item.find('.description').text();
@@ -69,7 +95,25 @@
     $('#add').addClass('bg-danger');
     activeItem = edit_id   
 }
-    
+    function deleteNote(delete_id){
+        $.ajax({
+            type : "GET",
+            url : "{% url 'DeleteNote' %}",
+            data:{
+                 'delete_id' : delete_id,
+
+           },
+           success:function(response){
+            console.log(response.notes)
+            showNote(response.notes)
+            $('.delete').click(function(){
+                var delete_id = $(this).attr('data')
+                console.log(delete_id)
+                deleteNote(delete_id)
+            })
+           }
+        })
+    }
     
     $(document).on('submit','#noteForm',function(e){
         e.preventDefault();
@@ -94,23 +138,9 @@
                 console.log(response)
                 console.log(response.notes)
                 data = response.notes
-                $('#notesTable tbody').empty()
                 $('#noteForm').trigger('reset')
                 if(response.status==1){
-                    for(i = 0 ;i<data.length;i++){
-                        $('#notesTable tbody').append(    
-                            `                
-                            <tr>
-                            <th scope="row">${i+1}</th>
-                            <td class="title">${data[i].title}</td>
-                            <td class="description ">${data[i].description}</td>
-                            <td><button data="${data[i].id}"  class="btn btn-primary edit">Edit</button></td>
-                            <td><button data="${data[i].id}" class="btn btn-danger">Delete</button></td>
-                            </tr>
-                        `
-                        )
-                    }
-
+                    showNote(data)     
                 }
                  
                 $('#message').text(response.status_message)
@@ -119,6 +149,11 @@
                 $('.edit').click(function(){
                     var item = $(this).closest('tr')
                     editItem(item)
+                })
+                $('.delete').click(function(){
+                    var delete_id = $(this).attr('data')
+                    console.log(delete_id)
+                    deleteNote(delete_id)
                 })
 
                 if(response.status_message = "Note created")
@@ -138,6 +173,12 @@
     $('.edit').click(function(){
         var item = $(this).closest('tr')
         editItem(item)
+    })
+
+    $('.delete').click(function(){
+        var delete_id = $(this).attr('data')
+        console.log(delete_id)
+        deleteNote(delete_id)
     })
     
 </script>
