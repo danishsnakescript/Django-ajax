@@ -1,4 +1,2 @@
 # Django-ajax
 
-## Danish
-### Ahmed
